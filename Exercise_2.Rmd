@@ -1,0 +1,37 @@
+---
+title: "Exercise_2"
+author: "Cory Suzuki"
+date: "2022/1/26"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+
+```{r}
+Sys.setenv(LANG="en")
+library("tidyverse")
+```
+
+```{r}
+library(readr)
+df = read_csv("/Users/coryg/Desktop/473/datasets/Income.csv")
+df
+```
+
+```{r}
+library("dplyr")
+glimpse(df)
+```
+This data set has 3 columns and 30 rows.
+
+```{r}
+library("tidyverse")
+ggplot(df, mapping = aes(x = Education, y = Income)) +
+geom_point() +
+geom_smooth(method = loess, se = FALSE, formula = y ~ x)
+```
+As years of education increases, the individual's income increases based on the given data set and its plot.

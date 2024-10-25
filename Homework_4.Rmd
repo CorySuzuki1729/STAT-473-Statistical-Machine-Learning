@@ -1,0 +1,195 @@
+---
+title: "Homework_4"
+author: "Cory Suzuki"
+date: "4/23/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Problem 1
+```{r}
+library(tidyverse)
+library(e1071)
+library(ISLR)
+data(OJ)
+help(OJ)
+
+
+set.seed(123)
+n = nrow(OJ)
+trainoj_id = sample(1:n, size = 800, replace= FALSE)
+testoj_id = (1:n)[-which(1:n %in% trainoj_id)]
+oj_train = OJ[trainoj_id, ]
+oj_test = OJ[-trainoj_id, ]
+
+#(b)
+set.seed(123)
+tune.svc = tune(svm, Purchase~., data= oj_train, kernel="linear",
+                ranges= list(cost= 10^seq(-2, 1, length.out=10)))
+summary(tune.svc)
+
+#The cost to use is 1.
+
+#(c)
+svc.oj = svm(Purchase~., data= oj_train, kernel="linear",
+             cost= 1, scale=FALSE)
+summary(svc.oj)
+
+#Based on the summary of our support vector classifier, it is of the C-Classification type with 356 support vectors. 177 of the support vectors are from the Citris Hill level and the remaining 179 are from the Minute Maid level.
+
+#(d)
+svc.oj.pred1 = predict(svc.oj, oj_train)
+svc.oj.traincon = table(predict_status= svc.oj.pred1,
+                        true_status= oj_train$Purchase)
+
+svc.oj.pred2 = predict(svc.oj, oj_test)
+svc.oj.testcon = table(predict_status= svc.oj.pred2,
+                       true_status= oj_test$Purchase)
+
+svc.oj.traincon
+svc.oj.testcon
+
+svc.oj.trainerr = (svc.oj.traincon[1,2] + svc.oj.traincon[2,1])/sum(svc.oj.traincon)
+
+svc.oj.testerr = (svc.oj.testcon[1,2] + svc.oj.testcon[2,1])/sum(svc.oj.testcon)
+
+svc.oj.trainerr
+svc.oj.testerr
+
+#The training error is 0.165 and the test error is 0.1592593 for the linear support vector classifier model.
+
+#(e)
+set.seed(123)
+tune.rad.oj = tune(svm, Purchase~., data= oj_train, kernel= "radial", ranges=list(cost= 10^seq(-2, 1, length.out = 10)))
+
+summary(tune.rad.oj)
+
+#The cost to use is 1.
+
+svm.rad.oj = svm(Purchase~., data= oj_train, kernel="radial", cost= 1, scale=FALSE)
+
+summary(svm.rad.oj)
+
+#According to the summary of the radial svm model, it is a C-classification type that has 552 support vectors, with 270 vectors associated with the Citris Hill level and the other 282 vectors associated with the Minute Maid level.
+
+svm.radoj.pred1 = predict(svm.rad.oj, oj_train)
+svm.radoj.train = table(predict_status= svm.radoj.pred1,
+      true_status= oj_train$Purchase)
+
+svm.radoj.pred2 = predict(svm.rad.oj, oj_test)
+svm.radoj.test = table(predict_status= svm.radoj.pred2,
+      true_status= oj_test$Purchase)
+
+svm.radoj.trainerr = (svm.radoj.train[1,2] + svm.radoj.train[2,1])/sum(svm.radoj.train)
+
+svm.radoj.testerr = (svm.radoj.test[1,2] + svm.radoj.test[2,1])/sum(svm.radoj.test)
+
+svm.radoj.trainerr
+svm.radoj.testerr
+
+#The training error for the radial model is 0.2275 and the test error is 0.2740741.
+
+#(e)
+set.seed(123)
+tune.poly.oj = tune(svm, Purchase~., data= oj_train, kernel="polynomial", degree= 2, ranges= list(cost= 10^seq(-2, 1, length.out= 10)))
+
+summary(tune.poly.oj)
+
+#According to the summary of the polynomial model, the cost to use is 4.641589.
+
+svm.poly.oj = svm(Purchase~., data= oj_train, kernel= "polynomial", degree=2, cost=4.641589, scale=FALSE)
+
+summary(svm.poly.oj)
+
+#According tot he summary, this model is a C-classification model with 246 support vectors. 122 of the support vectors are associated with the Citris Hill level and 124 of the support vectors are associated with the Minute Maid level.
+
+svm.polyoj.pred1 = predict(svm.poly.oj, oj_train)
+svm.polyoj.con1 = table(predict_status= svm.polyoj.pred1,
+                       true_status= oj_train$Purchase)
+
+svm.polyoj.pred2 = predict(svm.poly.oj, oj_test)
+svm.polyoj.con2 = table(predict_status= svm.polyoj.pred2,
+                        true_status= oj_test$Purchase)
+
+svm.polyoj.trainerr = (svm.polyoj.con1[1,2] + svm.polyoj.con1[2,1])/sum(svm.polyoj.con1)
+
+svm.polyoj.testerr = (svm.polyoj.con2[1,2] + svm.polyoj.con2[2,1])/sum(svm.polyoj.con2)
+
+svm.polyoj.trainerr
+svm.polyoj.testerr
+
+#The training error for the polynomial model is 0.18125 and the test error is 0.162963.
+
+#(g) The best approach is the linear support vector classifier.
+```
+
+Problem 2
+```{r}
+library(tidyverse)
+library(plotly)
+library(e1071)
+
+#(a)
+set.seed(123)
+n = 200
+x1 = runif(n) - .5
+x2 = runif(n) - .5
+y = ifelse(x1^2 - x2^2 > 0, 1, 0) %>% as.factor()
+df = tibble(x1 = x1, x2 = x2, y = y)
+
+#(b)
+ggplot(df, aes(x1, x2, color=y)) + geom_point()
+
+
+#(c)
+set.seed(123)
+n = nrow(df)
+prop = .5
+train.sine.id = sample(1:n, size= round(n*prop), replace=FALSE)
+test.sine.id = (1:n) [-which(1:n %in% train.sine.id)]
+train.sine = df[train.sine.id, ]
+test.sine = df[test.sine.id, ]
+
+#(d)
+log.sin.mod = glm(y ~ x1 + x2, data= train.sine, family= "binomial")
+pred_sin_prob = predict(log.sin.mod, test.sine, type="response")
+pred_sin_off = ifelse(pred_sin_prob > 0.5, 1, 0)
+ggplot(data = data.frame(x1= test.sine$x1, x2 = test.sine$x2, pred= as.factor(pred_sin_off)), mapping= aes(x=x1, y=x2, color= pred)) + geom_point() + labs(colour= "Class")
+
+#(e)
+
+log.sin.mod2 = glm(y ~ x1 + x2 + I(x1^2) + I(x2^2) + I(x1 * x2), data= train.sine, family= "binomial")
+pred.sin.prob = predict(log.sin.mod2, test.sine, type="response")
+pred.sin.off = ifelse(pred.sin.prob > 0.5, 1, 0)
+ggplot(data.frame(x1 = test.sine$x1, x2 = test.sine$x2, pred= as.factor(pred.sin.off)), aes(x=x1, y=x2, col=pred)) + geom_point()+ labs(colour="Class")
+
+summary(log.sin.mod2)
+
+
+#(f)
+set.seed(123)
+svc.tune.mod = tune(svm, y ~ x1 + x2, data= train.sine, kernel= "linear", ranges= list(cost= 10^seq(-2, 1, length.out=10)))
+summary(svc.tune.mod)
+#Use cost=0.01
+svc.sin.mod = svm(y ~ x1 + x2, data= train.sine, kernel= "linear", cost= 0.01, scale= FALSE)
+
+pred.sin.prob2 = predict(svc.sin.mod, test.sine, type="response")
+ggplot(data.frame(x1 = test.sine$x1, x2 = test.sine$x2, svc.pred= as.factor(pred.sin.prob2)), aes(x=x1, y=x2, col=svc.pred)) + geom_point() + labs(colour= "Class")
+
+#(g)
+set.seed(123)
+svm.tune.mod = tune(svm, y ~ x1 + x2, data= train.sine, kernel= "radial", gamma= 1, ranges= list(cost= 10^seq(-2, 1, length.out= 10)))
+summary(svm.tune.mod)
+#Use cost=10
+svm.sin.mod = svm(y~ x1 + x2, data=train.sine, kernel= "radial", gamma = 1, cost= 10, scale= FALSE)
+pred.sin.off3 = predict(svm.sin.mod, test.sine, type="response")
+ggplot(data.frame(x1 = test.sine$x1, x2 = test.sine$x2, svm.pred= as.factor(pred.sin.off3)), mapping = aes(x=x1, y=x2, col=svm.pred)) + geom_point() + labs(colour= "Class")
+
+#(h) After plotting the graphs, we notice that the logistic regression approach yields a linear boundary and thus is not ideal for capturing the nonlinear boundary we would like. The support vector classifier approach also fails as it cannot find a boundary and classifies the observations into one class. However the approaches in (e) and (g) captures a nonlinear boundary similar to the original plotting of the observations with (e) being the best model.
+
+```

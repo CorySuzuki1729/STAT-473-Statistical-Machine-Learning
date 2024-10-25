@@ -1,0 +1,108 @@
+---
+title: "Exercise_0209"
+author: "Cory Suzuki"
+date: "2/9/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Exercise 4
+1-3.This code chunk loads all required packages, divides the data set into training and test sets where 70 percent of the data points are in the training set. Additionally, we fit a linear model, K=3 KNN model, K=5 KNN model, and K=11 KNN model.
+```{r}
+library(GGally)
+library(tidyverse)
+library(caret)
+
+n = 100
+x = seq(-2, 2, length=n)
+fx = exp(x*4+1)/(1+exp(x*4+1))
+set.seed(1)
+y = fx + rnorm(n, mean = 0, sd = .2)
+sf = data.frame(x = x, y = y)
+
+n = nrow(df)
+prop = .7
+set.seed(1)
+train_id = sample(1:n, size = round(n*prop), replace = FALSE)
+test_id = (1:n)[-which(1:n %in% train_id)]
+
+train_set = df[train_id, ]
+test_set = df[test_id, ]
+
+linear_fit = lm(y ~ x, data = train_set)
+knn_fit_3 = knnreg(y ~ x, data = train_set, k = 3)
+knn_fit_5 = knnreg(y ~ x, data = train_set, k = 5)
+knn_fit_11 = knnreg(y ~ x, data = train_set, k = 11)
+
+fhat_linear = predict(linear_fit, test_set)
+fhat_knn_3 = predict(knn_fit_3, test_set)
+fhat_knn_5 = predict(knn_fit_5, test_set)
+fhat_knn_11 = predict(knn_fit_11, test_set)
+```
+
+4. The next four code chunks visualize the linear fit and each of the three KNN fits (K=3, K=5, and K=11).
+```{r}
+ggplot(test_set, mapping = aes(x, y)) +
+geom_point(shape=21) +
+geom_line(aes(x, exp(x*4+1)/(1+exp(x*4+1))
+), show.legend = FALSE) +
+geom_line(aes(x, fhat_linear, colour="red"),
+show.legend = FALSE) +
+ggtitle(paste("Simple Linear Regression")) +
+theme_bw()
+```
+
+```{r}
+ggplot(test_set, mapping = aes(x, y)) +
+geom_point(shape=21) +
+geom_line(aes(x, exp(x*4+1)/(1+exp(x*4+1))
+), show.legend = FALSE) +
+geom_line(aes(x, fhat_knn_3, colour="red"),
+show.legend = FALSE) +
+ggtitle(paste("KNN, k = ", 3)) +
+theme_bw()
+```
+
+```{r}
+ggplot(test_set, mapping = aes(x, y)) +
+geom_point(shape=21) +
+geom_line(aes(x, exp(x*4+1)/(1+exp(x*4+1))
+), show.legend = FALSE) +
+geom_line(aes(x, fhat_knn_5, colour="red"),
+show.legend = FALSE) +
+ggtitle(paste("KNN, k = ", 5)) +
+theme_bw()
+```
+
+```{r}
+library(GGally)
+ggplot(test_set, mapping = aes(x, y)) +
+geom_point(shape=21) +
+geom_line(aes(x, exp(x*4+1)/(1+exp(x*4+1))
+), show.legend = FALSE) +
+geom_line(aes(x, fhat_knn_11, colour="red"),
+show.legend = FALSE) +
+ggtitle(paste("KNN, k = ", 11)) +
+theme_bw()
+```
+Based on these graphs, the KNN model with K=11 is closest to the true curve of f(x).
+
+5. This code creates a function that computes the R squared for each fitted model and calls that function to get R squared values for the linear model and the three KNN models.
+```{r}
+r2 = function(y, fhat){
+  rss = sum((y-fhat)^2)
+  tss = sum((y-mean(y))^2)
+  return (1-rss/tss)
+}
+
+r2(test_set$y, fhat_linear)
+r2(test_set$y, fhat_knn_3)
+r2(test_set$y, fhat_knn_5)
+r2(test_set$y, fhat_knn_11)
+```
+According to the computed R squared values, the KNN model with K=11 is the best model for this function's data set because its R-squared value is the greatest (0.847).

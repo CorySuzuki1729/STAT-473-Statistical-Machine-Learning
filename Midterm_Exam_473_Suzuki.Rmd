@@ -1,0 +1,343 @@
+---
+title: "Midterm_Exam_473"
+author: "Cory Suzuki"
+date: "4/6/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Question 1
+
+(i)
+This code chunk uses readr to read the csv file's data set from my personal computer's 473 directory. The head function displays a 10 row tibble as requested in the instructions.
+
+(ii)
+```{r}
+#(i)
+library(readr)
+library(tidyverse)
+data.frame = read_csv("/Users/coryg/Desktop/473/datasets/cancer_data - Copy (2).csv")
+head(data.frame, 10)
+
+#(ii)
+select = dplyr::select
+df = select(data.frame, -city)
+head(df, 10)
+
+#Use skimr package to check data types.
+```
+
+For the second part of the question, we create a subset from the original imported 'Cancer' data set and came to the conclusion that only the city variable could be removed per the instructions.
+
+Question 2
+
+(i) Observing the tibble we created in question 1, we conclude that every variable is a double <dbl> data type with the exception of diagnosis_result which is a binary character <chr> data type. In addition, per the instructions some double variables are categorical such as gender for example (categorical variables should be a <fct> data type). Thus, the data type for some variables are not correct, and will be corrected in part (ii) of this question.
+
+(ii)
+In this part of the problem, we transform the data frame's categorical variables into factors while leaving continuous/numerical variables as double data types. We also change the binary responses of "yes" and "no" values to numeric 1's and 0's to prepare for analysis (example: logistic regression requires the yes and no strings to be 0 or 1).
+```{r}
+library(tidyverse)
+df = df %>% mutate(diagnosis_binary = ifelse(diagnosis_result == "yes", 1, 0))
+df = df %>% mutate_at(c("gender", "asbestos_exposure", "type_of_MM", "keep_side", "cytology", "dyspnoea", "ache_on_chest", "habit_of_cigarette", "performance_status", "hemoglobin", "diagnosis_result", "diagnosis_binary"), factor)
+df = df %>% dplyr::select(-diagnosis_result)
+df
+```
+
+Question 3
+
+(i) If we are to know if a person will be diagnosed with cancer given the person's age, gender, keep-side, etc., then this problem will be a prediction problem because we have a set of inputs (predictors) available, and we want to determine if the patient will be diagnosed with cancer which is the response we want to measure using the predictors we are given.
+
+(ii) This problem is a classification problem because determining whether the patient is diagnosed with cancer is a binary variable, either the patient is diagnosed with cancer or not diagnosed with cancer.
+
+Question 4
+```{r}
+library(tidyverse)
+ggplot(df, mapping = aes(x = duration_of_symptoms,
+y = diagnosis_binary, color= duration_of_symptoms)) +
+geom_point(alpha=.2) +
+theme_bw()
+
+ggplot(df, mapping = aes(x = age,
+y = diagnosis_binary, color= age)) +
+geom_point(alpha=.2) +
+theme_bw()
+
+ggplot(df, mapping = aes(x = gender,
+y = diagnosis_binary, color= gender)) +
+geom_point(alpha=.2) +
+theme_bw()
+
+ggplot(df, mapping = aes(x = white_blood,
+y = diagnosis_binary, color= white_blood)) +
+geom_point(alpha=.2) +
+theme_bw()
+
+ggplot(df, mapping = aes(x = sedimentation,
+y = diagnosis_binary, color= sedimentation)) +
+geom_point(alpha=.2) +
+theme_bw()
+
+#table(df$diagnosis) /nrow(df)
+```
+The data set is balanced (should be unbalanced) because the data points are distributed equally according to the scatter plots made by the ggplot function.
+
+Question 5
+
+This code chunk splits the data into a training set that comprises of 80% of points and a testing set comprising of the remaining 20%.
+
+```{r}
+n = nrow(df)
+prop = .8
+set.seed(123)
+train_id_canc = sample(1:n, size= round(n*prop), replace=FALSE)
+test_id_canc = (1:n)[-which(1:n %in% train_id_canc)]
+train_canc = df[train_id_canc, ]
+test_canc = df[test_id_canc, ]
+
+```
+
+Question 6
+
+(i) Explanations/worded answers are below this code chunk. 
+
+```{r}
+logistic_canc = glm(diagnosis_binary ~., family=binomial(link="logit"), data=train_canc)
+
+#(ii)
+summary(logistic_canc)
+
+#(iii)
+refit_log_canc = glm(diagnosis_binary ~ duration_of_asbestos_exposure + keep_side + duration_of_symptoms + white_blood, family=binomial(link="logit"), data= train_canc)
+
+#(iv)
+summary(refit_log_canc)
+
+```
+
+(ii) Using the alpha threshold as 0.05, we observe that duration_of_asbestos_exposure (0.0429), keep_side (0.0353), duration_of_symptoms (0.0371), and white_blood (0.0298) are statistically significant predictors since they are less than 0.05.
+
+(iv) The estimated log odds is $ log(p/(1-p)) = -0.5106+0.01443(duration of asbestos exposure)+1.529(keep side)-0.03921(duration of symptoms)-0.0001005(white blood) $
+
+(v) #Fixme
+
+
+For a patient with cancer and a patient without cancer, given that they have the same diagnosis and exposure of asbestos, the patient will expect a 0.01443 increase of the log odds of the diagnosis.
+
+For a patient with cancer and a patient without cancer, given that they have the same diagnosis and keep_side, the patient will expect a 1.529 increase of the log odds of the diagnosis.
+
+For a patient with cancer and a patient without cancer, given that they have the same diagnosis and duration of symptoms, the patient will expect a 0.03921 decrease of the log odds of the diagnosis.
+
+For a patient with cancer and a patient without cancer, given that they have the same diagnosis and white blood count, the patient will expect a 0.0001005 decrease of the log odds of the diagnosis.
+
+Question 7
+```{r}
+library(MASS)
+lda_mod_canc = lda(diagnosis_binary ~., data=train_canc)
+lda_mod_canc
+
+```
+
+The prior probability of "yes" (1) is 0.308 and the prior probability of "no" (0) is 0.692.
+
+Question 8
+```{r}
+#(i)
+library(glmnet)
+x_mat_canc = model.matrix(diagnosis_binary ~., data= train_canc)
+x.mat.canc = model.matrix(diagnosis_binary ~., data= test_canc)
+y_vec_canc = train_canc$diagnosis_binary
+vec1.canc = seq(-2, 10, length=100)   #default tuning for lambda
+vec2.canc = 10^vec1.canc
+xmat_new_canc = apply(x_mat_canc, 2, function (x) scale(x, center=FALSE))   #standardize predictors
+set.seed(123)
+lasso.mod.canc = glmnet(xmat_new_canc, y_vec_canc, alpha=1, family="binomial", lambda=vec2.canc)
+
+#(ii)
+set.seed(123)
+cv.canc = cv.glmnet(xmat_new_canc, y_vec_canc, alpha=1, family="binomial", nfolds=5)
+bestlam.canc = cv.canc$lambda.min
+cv.lasso.err = cv.canc$cvm[cv.canc$lambda == bestlam.canc]
+#cvm included as output object value in glmnet according to R documentation.
+bestlam.canc
+cv.lasso.err
+
+#The best lambda to use is 0.022. The associated mean cv error with this choice of lambda is 0.241.
+
+#(iii)
+lasso.bestlam.canc = glmnet(xmat_new_canc, y_vec_canc, alpha=1, family="binomial", lambda=bestlam.canc)
+yhat.lasso.canc = predict(lasso.bestlam.canc, s=bestlam.canc,
+                          type="coefficients")
+yhat.lasso.canc
+```
+
+(ii)
+The best lambda to use from 5 fold cross validation is 0.022. The associated mean cv error with this choice of lambda is 1.241.
+
+(iii)
+The coefficients that are forced to be zero are asbestos_exposure, dyspnoea, ache_on_chest, habit_of_cigarette, performance_status, hemoglobin, blood_lactic_dehydrogenise, alkaline_phosphatise, total_protein, albumin, and glucose.
+
+Question 9
+
+(i)
+```{r}
+library(tree)
+dectree.canc = tree(diagnosis_binary ~., data= train_canc)
+summary(dectree.canc)
+
+#(ii)
+set.seed(123)
+cv.tree.canc = cv.tree(dectree.canc, FUN=prune.misclass, K=5)
+cv.tree.canc
+cv.tree.canc$size[which.min(cv.tree.canc$dev)]
+
+prune.tree.canc = prune.misclass(dectree.canc,
+                             best= cv.tree.canc$size[which.min(cv.tree.canc$dev)])
+prune.tree.canc
+```
+
+(i) According to the summary function, this tree has an error rate of 0.08696 and has 32 terminal nodes.
+
+(ii) When performing cross-validation, our optimal tree size is 8, so in the code above we pruned the tree to this optimal requirement.
+
+Question 10
+```{r}
+#(i)
+library(randomForest)
+p = ncol(train_canc) - 1
+set.seed(123)
+rf.mod.canc = randomForest(diagnosis_binary ~., data= train_canc,
+                           mtry= round(sqrt(p)), importance= TRUE)
+
+bag.mod.canc = randomForest(diagnosis_binary ~., data= train_canc,
+                           mtry= p, importance= TRUE)
+
+#(ii)
+varImpPlot(rf.mod.canc, main="Variable Importance (Random Forests)")
+```
+
+(ii) According to the Variable Importance plot, we should look at the mean decrease Gini criterion to determine which variable is the most important. It turns out that platelet count is the most important predictor.
+
+(iii) 
+The difference between bagging and random forests is that in a bagging model you set the mtry so that at every decision split, a fresh sample of m predictors is chosen from a set of p predictors where p = the number of columns minus one. On the contrary, a random forest model sets the mtry so that at every decision split, a fresh sample of m predictors is chosen from a set of sqrt(p) predictors, where p is once again the number of columns minus one. 
+
+(iv)
+The difference between a random forest and a boosting model is that in a boosting model, it does not rely on bootstrapping and uses tuning parameters, each tree is grown using information from previous trees, and has the potential to overfit datasets. Meanwhile random forests use bootstrapping and learns quicker than the boosting model since boosting is gradual.
+
+Question 11
+```{r}
+#(i)
+
+glm.probs.canc = predict.glm(refit_log_canc, test_canc, type="response")
+glm.pred.canc = ifelse(glm.probs.canc > 0.3, "yes", "no")
+glm.confusion = table(predict_status= glm.pred.canc,
+      true_status= test_canc$diagnosis_binary)
+glm.confusion
+
+lda.pred = predict(lda_mod_canc, test_canc)$class
+lda.confusion = table(predict_status= lda.pred,
+      true_status= test_canc$diagnosis_binary)
+lda.confusion
+  
+lasso.pred = predict(lasso.bestlam.canc, newx=x.mat.canc, type="class")
+lasso.confusion = table(predict_status= lasso.pred,
+      true_status= test_canc$diagnosis_binary)
+lasso.confusion
+
+tree.pred = predict(prune.tree.canc, test_canc, type="class")
+tree.confusion = table(predict_status= tree.pred,
+      true_status= test_canc$diagnosis_binary)
+tree.confusion
+
+rf.pred = predict(rf.mod.canc, newdata= test_canc, type="class")
+rf.confusion = table(predict_status= rf.pred,
+      true_status= test_canc$diagnosis_binary)
+rf.confusion
+
+#(ii)
+bag.pred = predict(bag.mod.canc, newdata= test_canc)
+bag.confusion = table(predict_status= bag.pred,
+      true_status= test_canc$diagnosis_binary)
+bag.confusion
+
+bag.err = (bag.confusion[1,2] + bag.confusion[2,1])/sum(bag.confusion)
+rf.err = (rf.confusion[1,2] + rf.confusion[2,1])/sum(rf.confusion)
+bag.err
+rf.err
+
+#1-sensitivity
+
+#(iv)
+glm.sens = glm.confusion[1,1]/(glm.confusion[1,1] + glm.confusion[2,1])
+
+lda.sens = lda.confusion[1,1]/(lda.confusion[1,1] + lda.confusion[2,1])
+
+lasso.sens = lasso.confusion[1,1]/lasso.confusion[1,1]
+
+tree.sens = tree.confusion[1,1]/(tree.confusion[1,1] + tree.confusion[2,1])
+
+rf.sens = rf.confusion[1,1]/(rf.confusion[1,1] + rf.confusion[2,1])
+
+glm.sens
+lda.sens
+lasso.sens
+tree.sens
+rf.sens
+
+#(v)
+library(ROCR)
+PRED_glm = predict(refit_log_canc, test_canc, type="response")
+glm_r = prediction(PRED_glm, test_canc$diagnosis_binary)
+perf = performance(glm_r, "tpr", "fpr")
+plot(perf, main = "ROC Curve for GLM")
+abline(0, 1, lty=3)
+
+lda_pred = predict(lda_mod_canc, test_canc)
+lda_pred_post = lda_pred$posterior[,2]
+pred1 = prediction(lda_pred_post, test_canc$diagnosis_binary)
+perf = performance(pred1, "tpr", "fpr")
+plot(perf, main = "ROC Curve for LDA")
+abline(0, 1, lty=3)
+
+PRED_lasso = predict(lasso.bestlam.canc, newx=x.mat.canc, type="response")
+lasso_r = prediction(PRED_lasso, test_canc$diagnosis_binary)
+perf = performance(lasso_r, "tpr", "fpr")
+plot(perf, main = "ROC Curve for Lasso")
+abline(0, 1, lty=3)
+
+PRED_tree = predict(prune.tree.canc, test_canc, type="class")
+tree_r = prediction(as.numeric(PRED_tree), as.numeric(test_canc$diagnosis_binary))
+perf = performance(tree_r, "tpr", "fpr")
+plot(perf, main = "ROC Curve for Tree")
+abline(0, 1, lty=3)
+
+PRED_rf = predict(rf.mod.canc, test_canc, type="prob")
+rf_r = prediction(PRED_rf[,2], test_canc$diagnosis_binary)
+perf = performance(rf_r, "tpr", "fpr")
+plot(perf, main = "ROC Curve for Random Forest")
+abline(0, 1, lty=3)
+
+auc.glm.canc = performance(glm_r, "auc")@y.values[[1]]
+auc.lda.canc = performance(pred1, "auc")@y.values[[1]]
+auc.lasso.canc = performance(lasso_r, "auc")@y.values[[1]]
+auc.tree.canc = performance(tree_r, "auc")@y.values[[1]]
+auc.rf.canc = performance(rf_r, "auc")@y.values[[1]]
+
+auc.glm.canc
+auc.lda.canc
+auc.lasso.canc
+auc.tree.canc
+auc.rf.canc
+```
+
+(ii) As expected, the bagging confusion matrix has the greater error rate than the random forest confusion matrix.
+
+(iii) If we care most about correctly identifying patients who do have this cancer, we will care more about sensitivity because it calculates the proportion of true positives that are correctly identified, or in other words, is the percentage of correct predictions that identify patients with the cancer.
+
+(iv) According to our criterion in (iii), the best model for this data set is the random forests model or the LDA model since they both share the highest sensitivity (0.961). We exclude consideration of lasso because its sensitivity is 1 which implies that we cannot have a perfect model. (In (v), the AUC even justifies this as the AUC value for lasso is 0.5 compared to the AUC for random forests (0.763), so random forests is the best model for this dataset.)
+
+(v) The random forest model has the highest AUC value (0.763) out of all the other models.

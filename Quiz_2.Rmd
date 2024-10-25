@@ -1,0 +1,38 @@
+---
+title: "Quiz_2"
+author: "Cory Suzuki"
+date: "3/7/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+(a) This data-set is unbalanced because we observe that the proportion of observations for the negative class is much greater than the proportion of observations for the positive class.
+
+(b)
+(i)We now use the values from the confusion matrix as:
+```{r}
+true_posdata = 1
+true_negdata = 44
+false_posdata = 0
+false_negdata = 5
+
+sensitivity_data = (true_posdata)/(true_posdata+false_negdata)
+specificity_data = (true_negdata)/(true_negdata+false_posdata)
+accuracy_data = (true_posdata+true_negdata)/(true_posdata+true_negdata+false_posdata+false_negdata)
+sensitivity_data
+specificity_data
+accuracy_data
+```
+So the sensitivity is 0.167, specificity is 1, and accuracy is 0.9.
+
+(ii) For identifying positive cases, we will want to decrease threshold of positive cases compared to negative cases to re-balance the data set.
+
+(c)
+(i) We will choose the circular point because it is closer to the upper left hand corner of the graph, which means we will be closer to the true positive and farther from the true negative rate.
+
+(ii)The x point has the larger threshold value 1.0, compared to the circular point which has the threshold at 0.5.

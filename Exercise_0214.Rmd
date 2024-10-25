@@ -1,0 +1,67 @@
+---
+title: "Exercises_0214_0216"
+author: "Cory Suzuki"
+date: "2/14/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Exercise 1
+
+1. This code performs a univariate logistic regression on the Default dataset with the response variable as default and income as the predictor.
+```{r}
+library(tidyverse)
+library(ISLR)
+data(Default, package="ISLR")
+m1 = glm(default ~ income, family = "binomial", data = Default)
+summary(m1)
+```
+The logistic equation in terms of log odds is:
+$log(p/1-p) = -3.094e+00-8.353e-06 \hat{\beta}_1$.
+
+2. The expected change in odds of default is by `exp(-8.353e-06)` units.
+
+3. This code chunk calculates $P(X | x=33)$.
+```{r}
+(exp(-3.094e+00-8.353e-06*33))/(1+(exp(-3.094e+00-8.353e-06*33)))
+```
+
+4. This code chunk calculates $P(X| x=33)$ using the predict glm function.
+```{r}
+help(predict.glm)
+newd = data.frame(income = 33)
+predict(m1, newd, type = "response")
+```
+
+##Exercise 2
+1.
+```{r}
+library(MASS)
+library(tidyverse)
+data(Boston)
+df2 = Boston %>%
+  mutate(crim_binary = ifelse(crim >= 0.26, 1, 0))
+df2
+```
+
+2.
+```{r}
+log_mod_bos = glm(crim_binary ~ indus + nox + age + lstat, family = "binomial", data = df2)
+summary(log_mod_bos)
+```
+3. Based on the summary function, the log odds is:
+$log(p/(1-p)) = -18.044264-0.076756(indus)+34.528941(nox)+0.005199(age)-0.010058(lstat)$
+
+4. We interpret the beta hat coefficient for lstat as: For every proportion of non-retail business acres per town, every parts per 10 million of nitrogen oxides concentration, and every proportion of owner-occupied units built prior to 1940, the one percent increase in the lower status population is associated with a 6.6% decrease of the log odds of the criminal binary response variable.
+
+5. This code chunk computes the 95% confidence interval for the multiple logistic regression model we have created.
+```{r}
+help(Boston)
+confint(log_mod_bos, level = 0.95)
+```
+We interpret the confidence interval of the beta hat coefficient for lstat as: We are 95% confident that the one percent increase in the lower status population is associated with a decrease of 6.6% or a 4.4% increase of the log odds of the criminal binary response variable.

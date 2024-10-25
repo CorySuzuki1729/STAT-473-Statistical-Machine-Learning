@@ -1,0 +1,210 @@
+---
+title: "Exercises_0404_0406"
+author: "Cory Suzuki"
+date: "4/4/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 1
+```{r}
+library(ISLR)
+library(tidyverse)
+library(randomForest)
+df = Carseats
+df = df %>% mutate(high_sales=ifelse(Sales > 8, "high", "low")) %>% mutate_at("high_sales", factor)
+train = df %>% dplyr::select(-1)
+n = nrow(train)
+prop = .5
+set.seed(123)
+train_id = sample(1:n, size=round(n*prop), replace = FALSE)
+test_id = (1:n) [-which(1:n %in% train_id)]
+train_car = train[train_id, ]
+test_car = train[test_id, ]
+
+#(a)
+set.seed(123)
+p = ncol(train) - 1
+bagging.mod.seats = randomForest(high_sales ~., data= train_car, mtry= p, importance=TRUE)
+
+#(b)
+varImpPlot(bagging.mod.seats, main="Variable Importance (Bagging)")
+
+#The most important predictor is Price.
+
+#(c)
+yhat.testbag = predict(bagging.mod.seats, test_car, type="class")
+bag.mat = table(predict_status= yhat.testbag,
+      true_status= test_car$high_sales)
+bag.mat
+
+test.err.bag = (bag.mat[1,2] + bag.mat[2,1])/(sum(bag.mat))
+test.err.bag
+
+#The test error rate for this model is 0.18.
+
+#(d)
+set.seed(123)
+p2 = ncol(train) - 1
+rf.mod.seats = randomForest(high_sales~., data= train_car,
+                            mtry= round(sqrt(p2)), importance= TRUE)
+
+varImpPlot(rf.mod.seats, main= "Variable Importance (Random Forests)")
+
+#The most important predictor is Price.
+
+yhattest.rf = predict(rf.mod.seats, test_car, type="class")
+rf.mat = table(predict_status= yhattest.rf,
+               true_status= test_car$high_sales)
+rf.mat
+
+test.err.rf = (rf.mat[1,2] + rf.mat[2,1])/sum(rf.mat)
+test.err.rf
+
+#The test error rate for this model is 0.17.
+
+#(e)
+bagging.mod.seats
+rf.mod.seats
+
+#When we compare the OOB confusion matrix for the bagging model with our test matrix, we notice that our matrix yields a smaller error rate (0.235 > 0.18) and when comparing the OOB confusion matrix for the random forest model with our test matrix, we notice that our matrix yields a smaller test error rate (0.245 > 0.17).
+```
+
+Exercise 2
+```{r}
+library(ISLR)
+library(gbm)
+library(tidyverse)
+data(Carseats)
+new_carseats = Carseats %>% mutate(high_sales = ifelse(Sales > 8, "High", "Low")) %>% mutate_at("high_sales", factor) %>% dplyr::select(-1)
+
+dat_fram = new_carseats %>% mutate(high_sales_numeric = ifelse(high_sales == "High", 1, 0)) %>% dplyr::select(-high_sales)
+
+n = nrow(dat_fram)
+prop = .5
+set.seed(123)
+train_id_seat = sample(1:n, size = round(n*prop), replace=FALSE)
+test_id_seat = (1:n)[-which(1:n %in% train_id_seat)]
+train_seat = dat_fram[train_id_seat, ]
+test_seat = dat_fram[test_id_seat, ]
+
+set.seed(123)
+boost_seat = gbm(high_sales_numeric ~., train_seat,
+                 n.trees=5000, shrinkage=0.1,
+                 interaction.depth=2,
+                 distribution= "bernoulli")
+
+yhat.test.boost.seats = predict(boost_seat, test_seat, type="response")
+
+phat.test.seats = ifelse(yhat.test.boost.seats > .5, 1, 0)
+
+confus.boost.seats = table(predict_status= phat.test.seats,
+                           true_status= test_seat$high_sales_numeric)
+confus.boost.seats
+
+test.err.boost = (confus.boost.seats[1,2] + confus.boost.seats[2,1])/sum(confus.boost.seats)
+test.err.boost
+
+#The test error for this model is 0.135. Ths test error rate is less than the test error rates for the bagging and random forest models.
+
+```
+
+Exercise 1
+```{r}
+library(tidyverse)
+library(e1071)
+#(1)
+set.seed(1)
+n = 200
+x = matrix(rnorm(n*2), ncol = 2)
+y = c(rep(-1, 10), rep(1, 10))
+x[y==1, ] = x[y==1, ] + 1
+df = data.frame(y = y, x = x)
+df = df %>% as_tibble()
+df = df %>% rename(x1 = x.1, x2 = x.2)
+df = df %>% mutate(y = factor(y))
+
+ggplot(df, aes(x1, x2, color=y))+geom_point()
+
+#The data is not linearly separable according to the scatterplot.
+
+#(2)
+prop = .5
+set.seed(1)
+train_id_data = sample(1:n, size=round(n*prop), replace= FALSE)
+test_id_data = (1:n) [-which(1:n %in% train_id_data)]
+train_dat = df[train_id_data, ]
+test_dat = df[test_id_data, ]
+
+#(3)
+set.seed(1)
+tune.svm = tune(svm, y~., data= train_dat, kernel="linear",
+                ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost to use is 0.1.
+
+summary(tune.svm)
+
+svm.lin = svm(y ~., data= train_dat, kernel="linear", cost=0.1,
+                  scale=FALSE)
+
+set.seed(1)
+tune.rad = tune(svm, y~., data= train_dat, kernel="radial", 
+                gamma= 1, ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost is 1.
+
+summary(tune.rad)
+
+svm.rad = svm(y~., data= train_dat, kernel="radial", gamma= 1, cost= 1, scale=FALSE)
+
+set.seed(1)
+tune.poly = tune(svm, y~., data= train_dat, kernel= "polynomial",
+                 ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost is 100.
+
+summary(tune.poly)
+
+svm.poly = svm(y~., data= train_dat, kernel="polynomial",
+               degree= 3, cost= 100, scale=FALSE)
+
+#help(svm)
+
+#(4)
+svmlin.pred = predict(svm.lin, test_dat)
+confus.lin = table(predict_status= svmlin.pred,
+                   true_status= test_dat$y)
+confus.lin
+
+svmrad.pred = predict(svm.rad, test_dat)
+confus.rad = table(predict_status= svmrad.pred,
+                   true_status= test_dat$y)
+confus.rad
+
+svmpoly.pred = predict(svm.poly, test_dat)
+confus.poly = table(predict_status= svmpoly.pred,
+                   true_status= test_dat$y)
+confus.poly
+
+svmlin.acc = (confus.lin[1,1] + confus.lin[2,2])/sum(confus.lin)
+
+svmrad.acc = (confus.rad[1,1] + confus.rad[2,2])/sum(confus.rad)
+
+svmpoly.acc = (confus.poly[1,1] + confus.poly[2,2])/sum(confus.poly)
+
+svmlin.acc
+svmrad.acc
+svmpoly.acc
+
+#The best model to use is the linear svm model because it has the greatest accuracy (0.76).
+
+#(5)
+help(plot.svm)
+plot(svm.lin, data= test_dat)
+```

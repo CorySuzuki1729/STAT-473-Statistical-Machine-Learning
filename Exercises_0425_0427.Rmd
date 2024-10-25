@@ -1,0 +1,177 @@
+---
+title: "Exercises_0425_0427"
+author: "Cory Suzuki"
+date: "4/22/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 2
+```{r}
+#(1)
+library(tidyverse)
+library(tidytext)
+library(forcats)
+prof1000 = read_csv("/Users/coryg/Desktop/473/datasets/prof1000.original.csv")
+
+#(2)
+prof1000_tokenized = prof1000 %>% unnest_tokens(word, comments)
+prof1000_tokenized
+
+#(3)
+stopwords = read_csv("/Users/coryg/Desktop/473/datasets/stopwords.evaluation.csv")
+
+#(4)
+prof1000_tokenized %>% anti_join(stopwords)
+
+#(5)
+word.freq = prof1000_tokenized %>%
+  group_by(profid) %>% anti_join(stopwords) %>% count(word, sort=TRUE)
+word.freq
+
+#(6)
+prof_tf_id = word.freq %>% bind_tf_idf(word, profid, n)
+prof_tf_id
+head(prof_tf_id, 10)
+
+#(7)
+prof_tf_id %>%
+filter(profid == 100) %>%
+slice_max(tf_idf, n = 10) %>%
+ggplot(aes(tf_idf, reorder(word, tf_idf), fill = profid)) +
+geom_col(show.legend = FALSE) +
+labs(x = "tf-idf", y = NULL)
+
+prof_tf_id %>%
+filter(profid == 500) %>%
+slice_max(tf_idf, n = 10) %>%
+ggplot(aes(tf_idf, reorder(word, tf_idf), fill = profid)) +
+geom_col(show.legend = FALSE) +
+labs(x = "tf-idf", y = NULL)
+
+prof_tf_id %>%
+filter(profid == 1000) %>%
+slice_max(tf_idf, n = 10) %>%
+ggplot(aes(tf_idf, reorder(word, tf_idf), fill = profid)) +
+geom_col(show.legend = FALSE) +
+labs(x = "tf-idf", y = NULL)
+
+#notes: geom_text() to show occurrences on bar plot of words.
+```
+
+Exercise 1
+```{r}
+#(1)
+library(tidyverse)
+library(tidytext)
+library(forcats)
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+data(stopwords)
+
+nrc_all = get_sentiments("nrc")
+
+emma_tidy = austen_books() %>%
+  filter(book == "Emma") %>%
+  unnest_tokens(word, text)
+
+emma_tidy %>%
+  inner_join(nrc_all) %>%
+  count(word, sort = TRUE)
+
+emma_sentiment = austen_books() %>%
+filter(book == "Emma") %>%
+unnest_tokens(word, text) %>%
+anti_join(stop_words) %>%
+count(word, sort = TRUE) %>%
+inner_join(nrc_all) %>%
+spread(sentiment, n, fill=0)
+
+head(emma_sentiment, 10)
+
+#(2)
+emma_sentiment = emma_sentiment %>% mutate(sentiment_score = positive - negative)
+range(emma_sentiment$sentiment_score)
+
+#The range is from -98 to 241.
+
+#(3)
+emma_sentiment %>%
+slice_max(order_by = sentiment_score, n = 5) %>%
+mutate(word = reorder(word, sentiment_score)) %>%
+ggplot(aes(sentiment_score, word)) +
+geom_col(show.legend = FALSE)
+
+#(4)
+emma_sentiment %>%
+slice_max(order_by = -sentiment_score, n = 5) %>%
+mutate(word = reorder(word, -sentiment_score)) %>%
+ggplot(aes(-sentiment_score, word)) +
+geom_col(show.legend = FALSE)
+```
+
+Exercise 2
+```{r}
+library(tidyverse)
+library(tidytext)
+library(forcats)
+library(janeaustenr)
+library(dplyr)
+library(stringr)
+library(SnowballC)
+
+#(1)
+prof1000 = read_csv("/Users/coryg/Desktop/473/datasets/prof1000.original.csv")
+is_tibble(prof1000)
+
+#(2)
+prof1000_tokenized = prof1000 %>% unnest_tokens(word, comments)
+is_tibble(prof1000_tokenized)
+
+#(3)
+stopwords = read_csv("/Users/coryg/Desktop/473/datasets/stopwords.evaluation.csv")
+is_tibble(stopwords)
+
+#(4)
+prof1000_tokenized = prof1000_tokenized %>% anti_join(stopwords)
+
+#(5)
+word.freq = prof1000_tokenized %>% inner_join(get_sentiments("bing")) %>% count(word, sentiment, sort=TRUE)
+
+word.freq %>%
+group_by(sentiment) %>%
+slice_max(order_by = n, n = 5) %>%
+mutate(word = reorder(word, n)) %>%
+ggplot(aes(n, word, fill = sentiment)) +
+geom_col(show.legend = FALSE) +
+facet_wrap(~sentiment, scales = "free_y") +
+labs(x = "Contribution to sentiment",
+y = NULL)
+
+#Exercise 3
+
+#(1)
+prof1000_tokenized2 = mutate(prof1000_tokenized,
+                            word.stem = wordStem(word, language = "en"))
+
+word.freq2 = prof1000_tokenized2 %>% inner_join(get_sentiments("bing")) %>% count(word, sentiment, sort=TRUE)
+
+word.freq2 %>%
+group_by(sentiment) %>%
+slice_max(order_by = n, n = 5) %>%
+mutate(word = reorder(word, n)) %>%
+ggplot(aes(n, word, fill = sentiment)) +
+geom_col(show.legend = FALSE) +
+facet_wrap(~sentiment, scales = "free_y") +
+labs(x = "Contribution to sentiment",
+y = NULL)
+
+#The wordStem() function groups similar words into one type of word, such as assigns and assignments into assign.
+
+```

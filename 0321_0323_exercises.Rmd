@@ -1,0 +1,71 @@
+---
+title: "0321_0323_exercises"
+author: "Cory Suzuki"
+date: "3/21/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 2
+```{r}
+library(ISLR)
+library(tidyverse)
+library(tree)
+data(Carseats)
+help(Carseats)
+
+##(1), (2), (3)
+df = Carseats
+df = df %>% mutate(high_sales=ifelse(Sales > 8, "high", "low")) %>% mutate_at("high_sales", factor)
+train = df %>% dplyr::select(-1)
+n = nrow(train)
+prop = .5
+set.seed(123)
+train_id = sample(1:n, size=round(n*prop), replace = FALSE)
+test_id = (1:n) [-which(1:n %in% train_id)]
+train_car = train[train_id, ]
+test_car = train[test_id, ]
+
+#(4)
+tree.car = tree(high_sales ~., data=train_car)
+
+#(5)
+summary(tree.car)
+
+##The number of terminal nodes is 20. The training error rate is 0.115. The residual mean deviance is 0.5056.
+
+#(6)
+carse_pred = predict(tree.car, test_car, type="class")
+table(predict_status= carse_pred,
+      true_status= test_car$high_sales)
+
+acc_carseats = (65+87)/(65+87+35+13)
+acc_carseats
+
+##The accuracy is 0.76.
+
+#(7), (8)
+library(tree)
+set.seed(123)
+cv.cltree = cv.tree(tree.car, FUN = prune.misclass)
+cv.cltree$size[which.min(cv.cltree$dev)]
+prune.carcl = prune.misclass(tree.car,
+                             best = cv.cltree$size[which.min(cv.cltree$dev)])
+prune.carcl
+
+##The best tree size to use is 20.
+
+carse.predpr = predict(prune.carcl, test_car, type="class")
+table(predict_status = carse.predpr,
+      true_status = test_car$high_sales)
+
+prunedcarse.acc = (65 + 87) / (65+87+35+13)
+prunedcarse.acc
+
+##The accuracy of the pruned classification tree is 0.76. In this case, the pruned model and the unpruned model yield the same results.
+```

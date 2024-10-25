@@ -1,0 +1,49 @@
+---
+title: "Exercises_0207"
+author: "Cory Suzuki"
+date: "2/7/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Exercise 2
+1. This chunk of code loads the MASS, GGally, and tidyverse libraries and imports the Boston data set.
+```{r}
+library(MASS)
+library(GGally)
+library(tidyverse)
+data(Boston)
+help(Boston)
+```
+
+This chunk of code builds a simple linear regression model of the Boston data set with y=medv and x=lstat. We also determine a 90% confidence interval of our model.
+```{r}
+lin_regn = lm(medv ~ lstat, data = Boston)
+confint(lin_regn,level = 0.90)
+```
+The 90% confidence interval for beta nought (the slope estimate) is [-1.014, -0.886]. We interpret this as a conclusion that for each one percent increase of the lower status population, there will be an average decrease in the median value of owner-occupied homes between \$1,014 and \$886.
+
+2. This code chunk prints a summary of the simple linear regression model and here we analyze the hypothesis test of our beta nought and get our R-squared value.
+```{r}
+summary(lin_regn)
+```
+According to the printed summary, we reject the null hypothesis and conclude that for the Boston data set that there is a significant relationship between the median value of owner-occupied homes in \$1000s and the lower status of the population since our p-value is less than 0.05. The R-squared of the linear model is 0.543.
+
+##Exercise 3
+1. This code chunk creates another object instance of the Boston linear regression model with the addition of two more predictors, namely age and pupil-teacher ratio.
+```{r}
+lin_regnv2 = lm(medv ~ lstat + age + ptratio, data = Boston)
+summary(lin_regnv2)
+```
+
+2. This code chunk makes a new data frame and assigns values to the predictor variables lstat, age, and ptratio. It also calls the predict() function and sets the level to 0.95.
+```{r}
+newd = data.frame(lstat = 13, age = 69, ptratio = 18)
+predict(lin_regnv2, newd, interval = "prediction", level = 0.95)
+```
+The predicted medv (median value of owner-occupied homes in \$1000s) value is 22.765.

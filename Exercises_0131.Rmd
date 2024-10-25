@@ -1,0 +1,65 @@
+---
+title: "Lecture_2_Exercises"
+author: "Cory Suzuki"
+date: "1/31/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 1 
+
+##1.This code chunk loads the MASS Boston library, dplyr, and GGally. It uses help() to identify what each variable is in the Boston package.
+```{r}
+library(MASS)
+library(tidyverse)
+library(dplyr)
+library(GGally)
+data(Boston)
+help(Boston)
+```
+
+##2.This code chunk uses select() to select the following subset of variables from the Boston dataset.
+```{r}
+library("tidyverse")
+select = dplyr::select
+Boston_subset = select(Boston, crim, indus, nox, age, lstat) %>%
+as_tibble()
+print(Boston_subset)
+```
+There are 506 rows, 5 columns, and 5 features in this subset.
+
+##3. This code chunk uses ggpairs() to make a scatterplot matrix of the data subset from part 2.
+```{r}
+library("GGally")
+ggpairs(Boston_subset)
+```
+
+##4. This portion is a written response to the proposed question: According to the scatterplot matrix in part 3, which predictor has the strongest correlation with per capita crime rate per town?
+
+According to the scatterplot matrix in part 3 of the Boston data subset, the predictor of lower status of the population in percent has the strongest correlation with per capita crime rate per town (r=.456).
+
+Exercise 2
+What is the goal of each of the following cases: prediction or inference? Describe each briefly.
+
+1. We want to know whether a patient, hospitalized due to a heart
+attack, will have a second heart attack, on the basis of the
+demographic, diet and clinical measurements for that patient.
+
+This case's goal is a prediction whether a person will have a second heart attack(response) based on the demographic, diet, and clinical measurements of the individual(predictor).
+
+2. We want to identify and quantify the influence of each
+important predictor for heart attack, based on demographic,
+diet and clinical variables.
+
+This case's goal is an inference since it aims to identify/select which predictors are responsible for the response.
+
+3. We want to know the price of a stock in 6 months from now,
+on the basis of company performance measures and economic
+data.
+
+This case's goal is a prediction since it wants to find out the price of the stock (the output) based on performance measures and economic data (the inputs).

@@ -1,0 +1,42 @@
+---
+title: "Exercises_0418_0420"
+author: "Cory Suzuki"
+date: "4/18/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+data(stop_words)
+
+#(1)
+text_mlk = read_lines("/Users/coryg/Desktop/473/datasets/I_have_a_dream.txt")
+
+#(2)
+text_df = tibble(line= 1:46 , text= text_mlk)
+text_df
+
+#(3)
+text_df = text_df %>% unnest_tokens(word, text) %>% count(word, sort=TRUE)
+#use ggplot and aes
+text_df_plot = text_df %>% filter(n >= 3) %>% ggplot(aes(n, reorder(word, n))) + geom_col(show.legend=FALSE) + labs(y= NULL)
+
+text_df_plot
+
+#(4)
+text_df_rem = text_df %>% anti_join(stop_words)
+
+text_df_plot2 = text_df_rem %>% filter(n >= 3) %>% ggplot(aes(n, reorder(word, n))) + geom_col(show.legend=FALSE) + labs(y= NULL)
+
+text_df_plot2
+
+#The main difference is that for the second plot, the stopwords have been removed and the first plot contains the stopwords such as "of". The most frequent word for the first plot is "of" and the second plot has "freedom" as the most occurring. 
+```

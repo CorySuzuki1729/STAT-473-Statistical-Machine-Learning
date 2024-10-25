@@ -1,0 +1,104 @@
+---
+title: "Exercises_0411_0413"
+author: "Cory Suzuki"
+date: "4/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(e1071)
+#(1)
+set.seed(1)
+n = 200
+x = matrix(rnorm(n*2), ncol = 2)
+y = c(rep(-1, 10), rep(1, 10))
+x[y==1, ] = x[y==1, ] + 1
+df = data.frame(y = y, x = x)
+df = df %>% as_tibble()
+df = df %>% rename(x1 = x.1, x2 = x.2)
+df = df %>% mutate(y = factor(y))
+
+ggplot(df, aes(x1, x2, color=y))+geom_point()
+
+#The data is not linearly separable according to the scatterplot.
+
+#(2)
+prop = .5
+set.seed(1)
+train_id_data = sample(1:n, size=round(n*prop), replace= FALSE)
+test_id_data = (1:n) [-which(1:n %in% train_id_data)]
+train_dat = df[train_id_data, ]
+test_dat = df[test_id_data, ]
+
+#(3)
+set.seed(1)
+tune.svm = tune(svm, y~., data= train_dat, kernel="linear",
+                ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost to use is 0.1.
+
+summary(tune.svm)
+
+svm.lin = svm(y ~., data= train_dat, kernel="linear", cost=0.1,
+                  scale=FALSE)
+
+set.seed(1)
+tune.rad = tune(svm, y~., data= train_dat, kernel="radial", 
+                gamma= 1, ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost is 1.
+
+summary(tune.rad)
+
+svm.rad = svm(y~., data= train_dat, kernel="radial", gamma= 1, cost= 1, scale=FALSE)
+
+set.seed(1)
+tune.poly = tune(svm, y~., data= train_dat, kernel= "polynomial",
+                 ranges= list(cost= 10^seq(-3, 2, length.out=6)))
+
+#The cost is 100.
+
+summary(tune.poly)
+
+svm.poly = svm(y~., data= train_dat, kernel="polynomial",
+               degree= 3, cost= 100, scale=FALSE)
+
+#help(svm)
+
+#(4)
+svmlin.pred = predict(svm.lin, test_dat)
+confus.lin = table(predict_status= svmlin.pred,
+                   true_status= test_dat$y)
+confus.lin
+
+svmrad.pred = predict(svm.rad, test_dat)
+confus.rad = table(predict_status= svmrad.pred,
+                   true_status= test_dat$y)
+confus.rad
+
+svmpoly.pred = predict(svm.poly, test_dat)
+confus.poly = table(predict_status= svmpoly.pred,
+                   true_status= test_dat$y)
+confus.poly
+
+svmlin.acc = (confus.lin[1,1] + confus.lin[2,2])/sum(confus.lin)
+
+svmrad.acc = (confus.rad[1,1] + confus.rad[2,2])/sum(confus.rad)
+
+svmpoly.acc = (confus.poly[1,1] + confus.poly[2,2])/sum(confus.poly)
+
+svmlin.acc
+svmrad.acc
+svmpoly.acc
+
+#The best model to use is the linear svm model because it has the greatest accuracy (0.76).
+
+#(5)
+help(plot.svm)
+plot(svm.lin, data= test_dat)
+```

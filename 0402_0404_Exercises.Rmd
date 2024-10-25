@@ -1,0 +1,27 @@
+---
+title: "0402_0404_Exercises"
+author: "Cory Suzuki"
+date: "3/24/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Exercise 1
+```{r}
+library(randomForest)
+p = ncol(train) - 1
+set.seed(1)
+bag.mod = randomForest(high_sales ~., data = train_car, mtry = p, importance = TRUE)
+
+varImpPlot(bag.mod, main = "Variable Importance of Bagging Model")
+
+##The most important predictor based on the Gini index is the price predictor.
+
+yhat.bag = predict(bag.mod, test_car, type = "class")
+tb_bag = table(pred= yhat.bag,
+               true= test_car$high_sales)
+tb_bag
+```

@@ -1,0 +1,83 @@
+---
+title: "Midterm_473_Suzuki"
+author: "Cory Suzuki"
+date: "4/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Question 1
+
+(i)
+This code chunk uses readr to read the csv file's data set from my personal computer's 473 directory. The head function displays a 10 row tibble as requested in the instructions.
+
+(ii)
+```{r}
+#(i)
+library(readr)
+library(tidyverse)
+data.frame = read_csv("/Users/coryg/Desktop/473/datasets/cancer_data - Copy (2).csv")
+head(data.frame, 10)
+
+#(ii)
+select = dplyr::select
+DF = select(data.frame, -city)
+head(DF, 10)
+```
+
+For the second part of the question, we create a subset from the original imported 'Cancer' data set and came to the conclusion that only the city variable could be removed per the instructions.
+
+Question 2
+
+(i) Observing the tibble we created in question 1, we conclude that every variable is a double <dbl> data type with the exception of diagnosis_result which is a binary character <chr> data type. In addition, per the instructions some double variables are categorical such as gender for example (categorical variables should be a <fct> data type). Thus, the data type for some variables are not correct, and will be corrected in part (ii) of this question.
+
+(ii)
+In this part of the problem, we transform the data frame's categorical variables into factors while leaving continuous/numerical variables as double data types.
+```{r}
+library(tidyverse)
+DF = DF %>% mutate_at(c("gender", "asbestos_exposure", "type_of_MM", "keep_side", "cytology", "dyspnoea", "ache_on_chest", "habit_of_cigarette", "performance_status", "hemoglobin", "diagnosis_result"), factor)
+DF
+
+```
+
+Question 3
+
+(i) If we are to know if a person will be diagnosed with cancer given the person's age, gender, keep-side, etc., then this problem will be a prediction problem because we have a set of inputs (predictors) available, and we want to determine if the patient will be diagnosed with cancer which is the response we want to measure using the predictors we are given.
+
+(ii) This problem is a regression problem because determining whether the patient is diagnosed with cancer is a binary variable, either the patient is diagnosed with cancer or not diagnosed with cancer.
+
+Question 4
+
+The data set is 
+
+Question 5
+
+This code chunk splits the data into a training set that comprises of 80% of points and a testing set comprising of the remaining 20%.
+
+```{r}
+n = nrow(DF)
+prop = .8
+set.seed(123)
+train_id_CANC = sample(1:n, size= round(n*prop), replace=FALSE)
+test_id_CANC = (1:n)[-which(1:n %in% train_id_CANC)]
+train_CANC = DF[train_id_CANC, ]
+test_CANC = DF[test_id_CANC, ]
+
+```
+
+
+Question 6
+(i)
+```{r}
+logistic_CANC = glm(diagnosis_result ~., family="binomial", data= train_CANC)
+
+#(ii)
+summary(logistic_CANC)
+
+#(iii)
+
+```
+

@@ -1,0 +1,20 @@
+---
+title: "Quiz_3"
+author: "Cory Suzuki"
+date: "4/20/2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+(a) Yes, this data set is linearly separable.
+
+(b) A slight movement of the seventh observation will not affect the hyperplane because the classifier's decision rule is based on the support vectors, thus there is a high tolerance for some observations such as this one to be on the incorrect  side of the hyperplane or incorrect side of the margin.
+
+(c) We will choose (x1=3.5, x2=1.5, y=1) so that the two classes cannot be separated by a hyperplane (this y=1 point will be in the red class y=-1).
+
+(d) In order toimprove the support vector classifier for a nonlinear boundary between the classes, we can use a support vector machine kernel such as the polynomial kernel because the decision boundary will be made more flexible to accommodate the nonlinear point in part (c). 
